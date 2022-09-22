@@ -1,0 +1,34 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        jcenter()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/segmentio/substrata-kotlin")
+            credentials {
+                username = GITHUB_USERNAME
+                password = GITHUB_TOKEN
+            }
+        }
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/segmentio/EdgeFn-Kotlin")
+            credentials {
+                username = GITHUB_USERNAME
+                password = GITHUB_TOKEN
+            }
+        }
+    }
+}
+rootProject.name = "DestFilters-Kotlin"
+include ':sample'
+include ':destination-filters-kotlin'
