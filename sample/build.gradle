@@ -36,12 +36,10 @@ android {
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
     implementation project(":destination-filters-kotlin")
-//    implementation 'com.segment.analytics.kotlin:destination-filters-kotlin:0.0.6'
-//    implementation 'com.segment.analytics.kotlin:edgefn-kotlin:0.0.7'
-//    implementation 'com.segment.analytics.kotlin:substrata-kotlin:0.0.5'
-//    implementation 'com.eclipsesource.j2v8:j2v8:6.2.0@aar'
-//    implementation 'io.alicorn.v8:v8-adapter:1.59'
-    implementation 'com.segment.analytics.kotlin:android:1.7.0'
+    implementation 'com.segment.analytics.kotlin:android:1.9.0'
+
+    implementation 'com.segment.analytics.kotlin.destinations:appsflyer:1.5.1'
+
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.5.0'

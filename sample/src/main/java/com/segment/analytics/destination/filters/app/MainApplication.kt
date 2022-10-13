@@ -4,6 +4,7 @@ import android.app.Application
 import com.segment.analytics.destination.filters.app.filters.WebhookPlugin
 import com.segment.analytics.kotlin.android.Analytics
 import com.segment.analytics.kotlin.core.Analytics
+import com.segment.analytics.kotlin.destinations.appsflyer.AppsFlyerDestination
 import com.segment.analytics.plugins.DestinationFilters
 import java.util.concurrent.Executors
 
@@ -26,7 +27,8 @@ class MainApplication : Application() {
             this.flushInterval = 0
         }
 
-        analytics.add(WebhookPlugin("https://webhook.site/dbfde56b-361f-46c1-966d-9de9e047255f", Executors.newSingleThreadExecutor()))
+        analytics.add(WebhookPlugin("https://webhook.site/c6349c6a-bc14-49be-9677-0c8df3e07b58", Executors.newSingleThreadExecutor()))
+        analytics.add(AppsFlyerDestination(applicationContext, false))
 
         analytics.add(DestinationFilters())
     }
