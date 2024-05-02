@@ -1,20 +1,12 @@
 package com.segment.analytics.plugins
 
-import com.segment.analytics.edgefn.kotlin.EdgeFunctions
 import com.segment.analytics.kotlin.core.Analytics
-import com.segment.analytics.kotlin.core.BaseEvent
 import com.segment.analytics.kotlin.core.Settings
 import com.segment.analytics.kotlin.core.platform.Plugin
-import com.segment.analytics.kotlin.core.utilities.putInContext
-import com.segment.analytics.kotlin.core.utilities.putInContextUnderKey
 import com.segment.analytics.kotlin.core.utilities.safeJsonArray
-import com.segment.analytics.substrata.kotlin.JSValue
-import com.segment.analytics.substrata.kotlin.asJSValue
-import com.segment.analytics.substrata.kotlin.j2v8.J2V8Engine
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.add
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import com.segment.analytics.liveplugins.kotlin.LivePlugins
+import com.segment.analytics.substrata.kotlin.JSScope
+import com.segment.analytics.substrata.kotlin.JsonElementConverter
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -57,15 +49,17 @@ class DestinationFilters : Plugin {
 
     override lateinit var analytics: Analytics
     override val type: Plugin.Type = Plugin.Type.Utility
-    lateinit var engine: J2V8Engine
+    lateinit var engine: JSScope
 
     override fun setup(analytics: Analytics) {
         super.setup(analytics)
-        val edgeFn = analytics.find(EdgeFunctions::class)
-            ?: EdgeFunctions().also { analytics.add(it) }
+        val edgeFn = analytics.find(LivePlugins::class)
+            ?: LivePlugins().also { analytics.add(it) }
         engine = edgeFn.engine
-        engine.execute(tsubScript)
-        engine.execute(destinationFilterEdgeFunctionTypes)
+        engine.sync {
+            evaluate(tsubScript)
+            evaluate(destinationFilterEdgeFunctionTypes)
+        }
     }
 
     override fun update(settings: Settings, type: Plugin.UpdateType) {
@@ -77,11 +71,14 @@ class DestinationFilters : Plugin {
                 val destination: String =
                     rule["destinationName"]?.jsonPrimitive?.contentOrNull ?: ""
                 if (destination.isNotBlank()) {
-                    val added = engine.call(
-                        "createDestinationFilter",
-                        listOf(destination.asJSValue(), rule.asJSValue())
-                    )
-                    if (added == JSValue.JSBool(true)) {
+                    val added = engine.await {
+                        call(
+                            "createDestinationFilter",
+                            destination,
+                            JsonElementConverter.write(rule, context)
+                        )
+                    }
+                    if (added == true) {
                         setOfActiveDestinations.add(destination)
                     }
                 }
