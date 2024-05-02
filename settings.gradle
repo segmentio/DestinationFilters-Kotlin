@@ -14,6 +14,6 @@ dependencyResolutionManagement {
         jcenter()
     }
 }
-rootProject.name = "DestinationFilters-kotlin"
+rootProject.name = "DestinationFilters-Kotlin"
 include ':sample'
 include ':destination-filters-kotlin'
