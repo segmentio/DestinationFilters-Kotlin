@@ -72,7 +72,7 @@ class DestinationFilters : Plugin {
                     rule["destinationName"]?.jsonPrimitive?.contentOrNull ?: ""
                 if (destination.isNotBlank()) {
                     val added = engine.await {
-                        call(
+                        return@await call(
                             "createDestinationFilter",
                             destination,
                             JsonElementConverter.write(rule, context)
