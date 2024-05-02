@@ -21,7 +21,7 @@ class WebhookPlugin(
     override val key: String = "Webhooks"
     override lateinit var analytics: Analytics
 
-    fun log(message: String, kind: LogFilterKind = LogFilterKind.DEBUG) {
+    fun log(message: String) {
         println("PRAY: $message")
     }
 
@@ -71,8 +71,7 @@ class WebhookPlugin(
                             inputStream?.close()
                         }
                         log(
-                            message = "Failed to send payload, statusCode=$responseCode, body=$responseBody",
-                            kind = LogFilterKind.ERROR
+                            message = "Failed to send payload, statusCode=$responseCode, body=$responseBody"
                         )
                     }
                 }
