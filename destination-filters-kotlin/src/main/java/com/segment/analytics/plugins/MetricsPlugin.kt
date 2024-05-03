@@ -16,7 +16,9 @@ class MetricsPlugin(setOfActiveDestinations: Set<String>): Plugin {
 
     init {
         activeDestinations = buildJsonArray {
-            setOfActiveDestinations.forEach { add(it) }
+            for (dest in setOfActiveDestinations) {
+                add(dest)
+            }
         }
     }
 

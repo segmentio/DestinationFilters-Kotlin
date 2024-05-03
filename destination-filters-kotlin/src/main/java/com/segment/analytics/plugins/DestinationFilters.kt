@@ -66,7 +66,7 @@ class DestinationFilters : Plugin {
         if (type != Plugin.UpdateType.Initial) return
         val setOfActiveDestinations = mutableSetOf<String>()
         settings.middlewareSettings["routingRules"]?.safeJsonArray?.let { rules ->
-            rules.forEach {
+            for (it in rules) {
                 val rule = it.jsonObject
                 val destination: String =
                     rule["destinationName"]?.jsonPrimitive?.contentOrNull ?: ""
