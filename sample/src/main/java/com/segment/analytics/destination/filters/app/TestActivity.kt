@@ -1,17 +1,21 @@
 package com.segment.analytics.destination.filters.app
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import android.widget.TextView
-import com.segment.analytics.edgefn.kotlin.EdgeFunctions
-import com.segment.analytics.kotlin.android.Analytics
+import androidx.appcompat.app.AppCompatActivity
+import com.segment.analytics.kotlin.core.AliasEvent
+import com.segment.analytics.kotlin.core.BaseEvent
+import com.segment.analytics.kotlin.core.GroupEvent
+import com.segment.analytics.kotlin.core.IdentifyEvent
+import com.segment.analytics.kotlin.core.ScreenEvent
+import com.segment.analytics.kotlin.core.TrackEvent
+import com.segment.analytics.kotlin.core.utilities.LenientJson
+import com.segment.analytics.kotlin.core.utilities.getString
 import com.segment.analytics.plugins.DestinationFilters
-import com.segment.analytics.substrata.kotlin.JSValue
-import com.segment.analytics.substrata.kotlin.asJSValue
-import com.segment.analytics.substrata.kotlin.j2v8.toBaseEvent
+import com.segment.analytics.substrata.kotlin.JSObject
+import com.segment.analytics.substrata.kotlin.JsonElementConverter
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
-import org.w3c.dom.Text
 
 class TestActivity : AppCompatActivity() {
     val analytics = MainApplication.analytics
@@ -44,13 +48,16 @@ class TestActivity : AppCompatActivity() {
         }
 
         // Test if tsub is loaded
-        val tsubLoaded =
-            engine.execute("""(typeof dest_filters.evaluateDestinationFilters === "function")""")
-        testProgress.append("tsub loaded correctly: ${(tsubLoaded == true.asJSValue()).emoji()}\n")
+        val tsubLoaded = engine.await {
+            return@await evaluate("""(typeof dest_filters.evaluateDestinationFilters === "function")""")
+        }
+
+        testProgress.append("tsub loaded correctly: ${(tsubLoaded == true).emoji()}\n")
 
         // Test if createDestinationFilter exists and works
-        val result = engine.execute(
-            """
+        val result = engine.await(global = true) {
+            evaluate(
+                """
             dest_filters.evaluateDestinationFilters(
                {
                  "matchers": [
@@ -106,14 +113,18 @@ class TestActivity : AppCompatActivity() {
                }
             )
             """.trimIndent()
-        )
-        testProgress.append("tsub is functioning: \n")
-        testProgress.append("\tResult is a json object: ${(result is JSValue.JSObject).emoji()}\n")
-        (result as JSValue.JSObject).toBaseEvent().let {
-            testProgress.append("\tEvent is non null: ${(it != null).emoji()}\n")
-            val t = it!!.context["device"]?.jsonObject?.contains("id")?.not() ?: false
-            testProgress.append("\tEvent context.device.id is filtered: ${t.emoji()}\n")
+            )
         }
+        testProgress.append("tsub is functioning: \n")
+        testProgress.append("\tResult is a json object: ${(result is JSObject).emoji()}\n")
+        engine.sync {
+            JsonElementConverter.read(result).jsonObject.toBaseEvent().let {
+                testProgress.append("\tEvent is non null: ${(it != null).emoji()}\n")
+                val t = it!!.context["device"]?.jsonObject?.contains("id")?.not() ?: false
+                testProgress.append("\tEvent context.device.id is filtered: ${t.emoji()}\n")
+            }
+        }
+
 
 
         // Test if update creates filters
@@ -121,5 +132,18 @@ class TestActivity : AppCompatActivity() {
         // FIXME for now being done via writekey... Need to make this into UNIT Tests later
 
         textView.text = testProgress.toString()
+    }
+
+    private fun JsonObject.toBaseEvent(): BaseEvent? {
+        val type = getString("type")
+
+        return when (type) {
+            "identify" -> LenientJson.decodeFromJsonElement(IdentifyEvent.serializer(), this)
+            "track" -> LenientJson.decodeFromJsonElement(TrackEvent.serializer(), this)
+            "screen" -> LenientJson.decodeFromJsonElement(ScreenEvent.serializer(), this)
+            "group" -> LenientJson.decodeFromJsonElement(GroupEvent.serializer(), this)
+            "alias" -> LenientJson.decodeFromJsonElement(AliasEvent.serializer(), this)
+            else -> null
+        }
     }
 }

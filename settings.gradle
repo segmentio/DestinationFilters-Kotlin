@@ -11,9 +11,11 @@ dependencyResolutionManagement {
         mavenLocal()
         google()
         mavenCentral()
-        jcenter()
+        maven {
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
     }
 }
-rootProject.name = "DestinationFilters-kotlin"
+rootProject.name = "DestinationFilters-Kotlin"
 include ':sample'
 include ':destination-filters-kotlin'
