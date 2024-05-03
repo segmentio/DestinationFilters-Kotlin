@@ -3,18 +3,10 @@ package com.segment.analytics.destination.filters.app
 import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.segment.analytics.kotlin.core.AliasEvent
-import com.segment.analytics.kotlin.core.BaseEvent
-import com.segment.analytics.kotlin.core.GroupEvent
-import com.segment.analytics.kotlin.core.IdentifyEvent
-import com.segment.analytics.kotlin.core.ScreenEvent
-import com.segment.analytics.kotlin.core.TrackEvent
-import com.segment.analytics.kotlin.core.utilities.LenientJson
-import com.segment.analytics.kotlin.core.utilities.getString
+import com.segment.analytics.kotlin.core.utilities.toBaseEvent
 import com.segment.analytics.plugins.DestinationFilters
 import com.segment.analytics.substrata.kotlin.JSObject
 import com.segment.analytics.substrata.kotlin.JsonElementConverter
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 
 class TestActivity : AppCompatActivity() {
@@ -132,18 +124,5 @@ class TestActivity : AppCompatActivity() {
         // FIXME for now being done via writekey... Need to make this into UNIT Tests later
 
         textView.text = testProgress.toString()
-    }
-
-    private fun JsonObject.toBaseEvent(): BaseEvent? {
-        val type = getString("type")
-
-        return when (type) {
-            "identify" -> LenientJson.decodeFromJsonElement(IdentifyEvent.serializer(), this)
-            "track" -> LenientJson.decodeFromJsonElement(TrackEvent.serializer(), this)
-            "screen" -> LenientJson.decodeFromJsonElement(ScreenEvent.serializer(), this)
-            "group" -> LenientJson.decodeFromJsonElement(GroupEvent.serializer(), this)
-            "alias" -> LenientJson.decodeFromJsonElement(AliasEvent.serializer(), this)
-            else -> null
-        }
     }
 }
