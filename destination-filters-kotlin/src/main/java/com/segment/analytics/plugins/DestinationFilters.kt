@@ -57,6 +57,7 @@ class DestinationFilters : Plugin, LivePluginsDependent {
         super.setup(analytics)
         val livePlugin = analytics.find(LivePlugins::class)
             ?: LivePlugins().also { analytics.add(it) }
+        this.engine = livePlugin.engine
         livePlugin.addDependent(this)
     }
 
@@ -87,7 +88,6 @@ class DestinationFilters : Plugin, LivePluginsDependent {
     }
 
     override fun prepare(engine: JSScope) {
-        this.engine = engine
         this.engine.sync(global = true) {
             evaluate(tsubScript)
             evaluate(destinationFilterEdgeFunctionTypes)
