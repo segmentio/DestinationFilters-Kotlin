@@ -5,16 +5,18 @@ import com.segment.analytics.kotlin.core.Settings
 import com.segment.analytics.kotlin.core.platform.Plugin
 import com.segment.analytics.kotlin.core.utilities.safeJsonArray
 import com.segment.analytics.liveplugins.kotlin.LivePlugins
+import com.segment.analytics.liveplugins.kotlin.LivePluginsDependent
+import com.segment.analytics.substrata.kotlin.JSObject
 import com.segment.analytics.substrata.kotlin.JSScope
 import com.segment.analytics.substrata.kotlin.JsonElementConverter
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-class DestinationFilters : Plugin {
+class DestinationFilters : Plugin, LivePluginsDependent {
 
     companion object {
-        public const val version = "1.0.0"
+        public const val version = "1.0.1"
     }
 
     private val tsubScript = """
@@ -22,27 +24,27 @@ class DestinationFilters : Plugin {
     """.trimIndent()
 
     private val destinationFilterEdgeFunctionTypes = """
-        class DestinationFilter extends EdgeFn {
+        class DestinationFilter extends LivePlugin {
             constructor(destination, rules) {
-                super(EdgeFnType.enrichment, destination);
+                super(LivePluginType.enrichment, destination);
                 this.rules = rules;
             }
 
             execute(event) {
                 const result = dest_filters.evaluateDestinationFilters(this.rules, event);
-                if (!result) {
-                    console.log(`\${'$'}\{this.destination} filtered the event, \${'$'}\{JSON.stringify(event)}        `);
-                } else {
-                    console.log(`\${'$'}\{this.destination} did not filter the event, \${'$'}\{JSON.stringify(event)}        `);
-                }
-                return result
+                return result;
             }
         }
 
         function createDestinationFilter(destination, rules) {
             var dest = new DestinationFilter(destination, rules);
-            console.log(`Adding filter for \${'$'}\{destination}`)
-            return analytics.add(dest);
+            console.log(`Adding filter for ` + destination);
+            if (analytics.add(dest)) {
+                return dest;
+            }
+            else {
+                return null;
+            }
         }
 
     """.trimIndent()
@@ -53,13 +55,10 @@ class DestinationFilters : Plugin {
 
     override fun setup(analytics: Analytics) {
         super.setup(analytics)
-        val edgeFn = analytics.find(LivePlugins::class)
+        val livePlugin = analytics.find(LivePlugins::class)
             ?: LivePlugins().also { analytics.add(it) }
-        engine = edgeFn.engine
-        engine.sync {
-            evaluate(tsubScript)
-            evaluate(destinationFilterEdgeFunctionTypes)
-        }
+        this.engine = livePlugin.engine
+        livePlugin.addDependent(this)
     }
 
     override fun update(settings: Settings, type: Plugin.UpdateType) {
@@ -71,14 +70,14 @@ class DestinationFilters : Plugin {
                 val destination: String =
                     rule["destinationName"]?.jsonPrimitive?.contentOrNull ?: ""
                 if (destination.isNotBlank()) {
-                    val added = engine.await {
+                    val added = engine.await(global = true) {
                         return@await call(
-                            "createDestinationFilter",
+                            function = "createDestinationFilter",
                             destination,
                             JsonElementConverter.write(rule, context)
                         )
                     }
-                    if (added == true) {
+                    if (added is JSObject) {
                         setOfActiveDestinations.add(destination)
                     }
                 }
@@ -86,5 +85,15 @@ class DestinationFilters : Plugin {
         }
 
         analytics.add(MetricsPlugin(setOfActiveDestinations))
+    }
+
+    override fun prepare(engine: JSScope) {
+        this.engine.sync(global = true) {
+            evaluate(tsubScript)
+            evaluate(destinationFilterEdgeFunctionTypes)
+        }
+    }
+
+    override fun readyToStart() {
     }
 }
