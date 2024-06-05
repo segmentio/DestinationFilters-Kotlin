@@ -16,7 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
 class DestinationFilters : Plugin, LivePluginsDependent {
 
     companion object {
-        public const val version = "1.0.1"
+        public const val version = "1.0.2"
     }
 
     private val tsubScript = """
