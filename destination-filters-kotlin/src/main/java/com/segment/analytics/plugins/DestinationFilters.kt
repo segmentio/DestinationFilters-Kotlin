@@ -38,7 +38,7 @@ class DestinationFilters : Plugin, LivePluginsDependent {
 
         function createDestinationFilter(destination, rules) {
             var dest = new DestinationFilter(destination, rules);
-            console.log(`Adding filter for \${'$'}\{destination}`);
+            console.log(`Adding filter for ` + destination);
             if (analytics.add(dest)) {
                 return dest;
             }
