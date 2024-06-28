@@ -40,5 +40,4 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
 
-apply from: rootProject.file('gradle/artifacts.gradle')
 apply from: rootProject.file('gradle/mvn-publish.gradle')
